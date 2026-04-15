@@ -1,10 +1,14 @@
 import sqlite3
 import requests
 from fastapi import FastAPI, HTTPException # type: ignore
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel
 
 app = FastAPI()
+
+class PingResponse(BaseModel):
+    message: str
+    timestamp: str
 
 # Database setup
 def init_db():
@@ -158,6 +162,11 @@ def get_crypto(crypto_id: str):
 def get_dog(breed: str):
     dog = fetch_dog_data(breed)
     return dog
+
+# Ping endpoint
+@app.get("/ping", response_model=PingResponse)
+def ping():
+    return PingResponse(message="pong", timestamp=datetime.now(timezone.utc).isoformat())
 
 if __name__ == '__main__':
     init_db()  # Ensure the database is initialized when running the script
