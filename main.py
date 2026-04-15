@@ -159,6 +159,10 @@ def get_dog(breed: str):
     dog = fetch_dog_data(breed)
     return dog
 
+@app.get("/health")
+def get_health():
+    return {"status": "ok", "timestamp": datetime.now().isoformat(timespec='microseconds')}
+
 if __name__ == '__main__':
     init_db()  # Ensure the database is initialized when running the script
     import uvicorn # type: ignore
