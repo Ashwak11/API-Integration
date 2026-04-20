@@ -160,6 +160,4 @@ def get_dog(breed: str):
     return dog
 
 if __name__ == '__main__':
-    init_db()  # Ensure the database is initialized when running the script
-    import uvicorn # type: ignore
-    uvicorn.run(app, host="127.0.0.1", port=8001)
+    print("Hello from my test story!")

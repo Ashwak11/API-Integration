@@ -49,3 +49,17 @@ def test_get_dog():
     assert "group" in data
     assert "life_span" in data
     assert "temperament" in data
+
+import subprocess
+import sys
+
+def test_startup_message():
+    result = subprocess.run(
+        [sys.executable, "main.py"],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, f"Expected exit code 0, got {result.returncode}"
+    assert "Hello from my test story!" in result.stdout, (
+        f"Expected message not found in stdout: {result.stdout!r}"
+    )
