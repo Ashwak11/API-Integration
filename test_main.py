@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from fastapi.testclient import TestClient
 from main import app
 
@@ -49,3 +51,14 @@ def test_get_dog():
     assert "group" in data
     assert "life_span" in data
     assert "temperament" in data
+
+def test_startup_message():
+    result = subprocess.run(
+        [sys.executable, "main.py"],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, f"Expected exit code 0, got {result.returncode}"
+    assert result.stdout.strip() == "Hello from test story!", (
+        f"Unexpected stdout: {result.stdout!r}"
+    )
