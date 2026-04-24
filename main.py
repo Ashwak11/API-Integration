@@ -1,6 +1,7 @@
 import sqlite3
 import requests
-from fastapi import FastAPI, HTTPException # type: ignore
+from fastapi import FastAPI, HTTPException, APIRouter # type: ignore
+from fastapi.responses import PlainTextResponse
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -158,6 +159,14 @@ def get_crypto(crypto_id: str):
 def get_dog(breed: str):
     dog = fetch_dog_data(breed)
     return dog
+
+ashwak_router = APIRouter(prefix="/ashwak")
+
+@ashwak_router.get("/syed", response_class=PlainTextResponse)
+def get_syed():
+    return "syed"
+
+app.include_router(ashwak_router)
 
 if __name__ == '__main__':
     print("Hello from my test story!")
