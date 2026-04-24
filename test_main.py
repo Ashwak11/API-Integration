@@ -49,3 +49,24 @@ def test_get_dog():
     assert "group" in data
     assert "life_span" in data
     assert "temperament" in data
+
+def test_get_dingdong():
+    response = client.get("/dingdong")
+    assert response.status_code == 200
+    assert response.text == "dong"
+
+
+def test_dingdong_content_type():
+    response = client.get("/dingdong")
+    assert response.status_code == 200
+    assert "text/plain" in response.headers["content-type"]
+
+
+def test_dingdong_post_method_not_allowed():
+    response = client.post("/dingdong")
+    assert response.status_code == 405
+
+
+def test_dingdong_put_method_not_allowed():
+    response = client.put("/dingdong")
+    assert response.status_code == 405

@@ -1,6 +1,7 @@
 import sqlite3
 import requests
 from fastapi import FastAPI, HTTPException # type: ignore
+from fastapi.responses import PlainTextResponse
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -158,6 +159,10 @@ def get_crypto(crypto_id: str):
 def get_dog(breed: str):
     dog = fetch_dog_data(breed)
     return dog
+
+@app.get("/dingdong")
+def get_dingdong():
+    return PlainTextResponse(content="dong", status_code=200)
 
 if __name__ == '__main__':
     init_db()  # Ensure the database is initialized when running the script
