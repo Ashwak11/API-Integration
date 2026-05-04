@@ -1,6 +1,6 @@
 import sqlite3
 import requests
-from fastapi import FastAPI, HTTPException # type: ignore
+from fastapi import FastAPI, HTTPException, Response # type: ignore
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -158,6 +158,11 @@ def get_crypto(crypto_id: str):
 def get_dog(breed: str):
     dog = fetch_dog_data(breed)
     return dog
+
+# Fingfong endpoint
+@app.get("/fingfong")
+def get_fingfong():
+    return Response(content="fong", media_type="text/plain")
 
 if __name__ == '__main__':
     print("Hello from my test story!")

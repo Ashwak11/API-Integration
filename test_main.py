@@ -50,6 +50,11 @@ def test_get_dog():
     assert "life_span" in data
     assert "temperament" in data
 
+def test_get_fingfong():
+    response = client.get("/fingfong")
+    assert response.status_code == 200
+    assert response.text == "fong"
+
 import subprocess
 import sys
 
