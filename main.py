@@ -159,5 +159,9 @@ def get_dog(breed: str):
     dog = fetch_dog_data(breed)
     return dog
 
+@app.get("/zing/zong")
+def zingzong():
+    return {"message": "zong"}
+
 if __name__ == '__main__':
     print("Hello from my test story!")
