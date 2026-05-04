@@ -75,6 +75,13 @@ A FastAPI-based application that fetches and combines weather, cryptocurrency, a
 - **Parameters:**
   - `breed` (str): Name of the dog breed
 
+### Zing Zong
+
+- **URL:** `/zing/zong`
+- **Method:** `GET`
+- **Parameters:** None
+- **Response:** `{"message": "zong"}`
+
 ## Running Tests
 
 To run the tests, use `pytest`:

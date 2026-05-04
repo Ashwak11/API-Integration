@@ -1,5 +1,8 @@
+from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
-from main import app
+import pytest
+from fastapi import HTTPException
+from main import app, fetch_weather_data, fetch_crypto_data, fetch_dog_data
 
 client = TestClient(app)
 
@@ -125,6 +128,172 @@ def test_existing_dogs_endpoint_unaffected():
     """AC4: Existing /dogs endpoint still registered."""
     response = client.get("/dogs")
     assert response.status_code == 422  # missing required 'breed' param
+
+# ── Mock-based unit tests for external API functions ──────────────────────────
+
+def _mock_weather_response():
+    mock = MagicMock()
+    mock.raise_for_status = MagicMock()
+    mock.json.return_value = {
+        "main": {"temp": 15.0},
+        "weather": [{"description": "clear sky"}]
+    }
+    return mock
+
+def _mock_crypto_response():
+    mock = MagicMock()
+    mock.raise_for_status = MagicMock()
+    mock.json.return_value = {"bitcoin": {"usd": 60000.0}}
+    return mock
+
+def _mock_breeds_response():
+    mock = MagicMock()
+    mock.raise_for_status = MagicMock()
+    mock.json.return_value = [{"id": 1, "name": "Bulldog", "breed_group": "Non-Sporting", "life_span": "8-10 years", "temperament": "Friendly"}]
+    return mock
+
+def _mock_dog_image_response():
+    mock = MagicMock()
+    mock.raise_for_status = MagicMock()
+    mock.json.return_value = [{"url": "https://example.com/bulldog.jpg"}]
+    return mock
+
+
+class TestFetchWeatherData:
+    @patch("main.requests.get")
+    def test_success(self, mock_get):
+        mock_get.return_value = _mock_weather_response()
+        result = fetch_weather_data("London")
+        assert result["temperature"] == 15.0
+        assert result["description"] == "clear sky"
+
+    @patch("main.requests.get")
+    def test_http_error(self, mock_get):
+        import requests as req
+        mock = MagicMock()
+        mock.raise_for_status.side_effect = req.exceptions.HTTPError("bad")
+        mock_get.return_value = mock
+        with pytest.raises(HTTPException) as exc_info:
+            fetch_weather_data("Unknown")
+        assert exc_info.value.status_code == 400
+
+    @patch("main.requests.get")
+    def test_unexpected_error(self, mock_get):
+        mock_get.side_effect = Exception("network failure")
+        with pytest.raises(HTTPException) as exc_info:
+            fetch_weather_data("London")
+        assert exc_info.value.status_code == 500
+
+
+class TestFetchCryptoData:
+    @patch("main.requests.get")
+    def test_success(self, mock_get):
+        mock_get.return_value = _mock_crypto_response()
+        result = fetch_crypto_data("bitcoin")
+        assert result["current_price"] == 60000.0
+
+    @patch("main.requests.get")
+    def test_http_error(self, mock_get):
+        import requests as req
+        mock = MagicMock()
+        mock.raise_for_status.side_effect = req.exceptions.HTTPError("bad")
+        mock_get.return_value = mock
+        with pytest.raises(HTTPException) as exc_info:
+            fetch_crypto_data("unknown-coin")
+        assert exc_info.value.status_code == 400
+
+    @patch("main.requests.get")
+    def test_unexpected_error(self, mock_get):
+        mock_get.side_effect = Exception("timeout")
+        with pytest.raises(HTTPException) as exc_info:
+            fetch_crypto_data("bitcoin")
+        assert exc_info.value.status_code == 500
+
+
+class TestFetchDogData:
+    @patch("main.requests.get")
+    def test_success(self, mock_get):
+        mock_get.side_effect = [_mock_breeds_response(), _mock_dog_image_response()]
+        result = fetch_dog_data("bulldog")
+        assert result["image_url"] == "https://example.com/bulldog.jpg"
+        assert result["group"] == "Non-Sporting"
+
+    @patch("main.requests.get")
+    def test_breed_not_found(self, mock_get):
+        mock = MagicMock()
+        mock.json.return_value = []
+        mock_get.return_value = mock
+        with pytest.raises(HTTPException) as exc_info:
+            fetch_dog_data("unicorn")
+        assert exc_info.value.status_code == 404
+
+
+class TestGetWeatherEndpoint:
+    @patch("main.fetch_weather_data")
+    def test_success(self, mock_fn):
+        mock_fn.return_value = {"temperature": 20.0, "description": "sunny"}
+        response = client.get("/weather", params={"city": "Paris"})
+        assert response.status_code == 200
+        assert response.json()["temperature"] == 20.0
+
+
+class TestGetCryptoEndpoint:
+    @patch("main.fetch_crypto_data")
+    def test_success(self, mock_fn):
+        mock_fn.return_value = {"current_price": 50000.0}
+        response = client.get("/crypto", params={"crypto_id": "bitcoin"})
+        assert response.status_code == 200
+        assert response.json()["current_price"] == 50000.0
+
+
+class TestGetDogEndpoint:
+    @patch("main.fetch_dog_data")
+    def test_success(self, mock_fn):
+        mock_fn.return_value = {
+            "image_url": "https://example.com/dog.jpg",
+            "group": "Sporting",
+            "life_span": "10-12 years",
+            "temperament": "Friendly"
+        }
+        response = client.get("/dogs", params={"breed": "labrador"})
+        assert response.status_code == 200
+        assert "image_url" in response.json()
+
+
+class TestGetCombinedDataEndpoint:
+    @patch("main.fetch_dog_data")
+    @patch("main.fetch_crypto_data")
+    @patch("main.fetch_weather_data")
+    def test_success(self, mock_weather, mock_crypto, mock_dog):
+        mock_weather.return_value = {"temperature": 10.0, "description": "cloudy"}
+        mock_crypto.return_value = {"current_price": 3000.0}
+        mock_dog.return_value = {
+            "image_url": "https://example.com/dog.jpg",
+            "group": "Herding",
+            "life_span": "12-14 years",
+            "temperament": "Active"
+        }
+        response = client.post(
+            "/combined-data",
+            params={"city": "Berlin", "crypto_id": "ethereum", "breed": "collie"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["city"] == "Berlin"
+        assert data["temperature"] == 10.0
+        assert data["current_price"] == 3000.0
+        assert "timestamp" in data
+
+
+class TestGetHistoryDateFilter:
+    def test_with_date_range(self):
+        response = client.get(
+            "/combined-data/history",
+            params={"start_date": "2000-01-01T00:00:00", "end_date": "2000-01-02T00:00:00"}
+        )
+        assert response.status_code == 200
+        assert isinstance(response.json(), list)
+
 
 import subprocess
 import sys
