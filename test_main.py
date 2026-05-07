@@ -63,3 +63,8 @@ def test_startup_message():
     assert "Hello from my test story!" in result.stdout, (
         f"Expected message not found in stdout: {result.stdout!r}"
     )
+
+def test_get_delllenevo():
+    response = client.get("/delllenevo")
+    assert response.status_code == 200
+    assert response.json() == "lenevo"
