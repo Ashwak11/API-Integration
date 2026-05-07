@@ -63,3 +63,25 @@ def test_startup_message():
     assert "Hello from my test story!" in result.stdout, (
         f"Expected message not found in stdout: {result.stdout!r}"
     )
+
+def test_get_applebanana():
+    response = client.get("/applebanana")
+    assert response.status_code == 200
+    assert response.json() == "banana"
+
+def test_applebanana_ignores_query_params():
+    response = client.get("/applebanana?foo=bar&baz=123")
+    assert response.status_code == 200
+    assert response.json() == "banana"
+
+def test_applebanana_post_returns_405():
+    response = client.post("/applebanana")
+    assert response.status_code == 405
+
+def test_applebanana_put_returns_405():
+    response = client.put("/applebanana")
+    assert response.status_code == 405
+
+def test_applebanana_delete_returns_405():
+    response = client.delete("/applebanana")
+    assert response.status_code == 405
