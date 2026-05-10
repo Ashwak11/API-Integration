@@ -50,6 +50,21 @@ def test_get_dog():
     assert "life_span" in data
     assert "temperament" in data
 
+def test_get_ashwakamar():
+    response = client.get("/ashwakamar")
+    assert response.status_code == 200
+    assert response.text == "ashwak"
+
+def test_get_ashwakamar_unsupported_methods():
+    for method in ["post", "put", "delete", "patch"]:
+        response = getattr(client, method)("/ashwakamar")
+        assert response.status_code == 405
+
+def test_get_ashwakamar_with_query_params():
+    response = client.get("/ashwakamar", params={"foo": "bar"})
+    assert response.status_code == 200
+    assert response.text == "ashwak"
+
 import subprocess
 import sys
 
